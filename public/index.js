@@ -11,10 +11,6 @@ var firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-//const functions = require('firebase-functions');
-//const admin = require('firebase-admin');
-
-//admin.initializeApp();
 
 var currUser = null;
 let gameKey = 0;
@@ -27,22 +23,26 @@ var samp;
 var score = 0;
 var nickname = "";
 
-mydb.ref("games").child("activegame").once('value', ss => {
-  // alert(ss.val());
-  let startTime = (new Date()).getTime();
-  let gameData = { startTime: startTime, numQuest: numQuest, questions: triviaquestions, score: 0 };
-  // alert(JSON.stringify(gameData));
+// mydb.ref("games").child("activegame").once('value', ss => {
+//   let startTime = (new Date()).getTime();
+//   let gameData = { startTime: startTime, numQuest: numQuest, questions: triviaquestions, score: 0 };
+// });
 
-});
-
+/*
+sets the current user to be whatever email was authorized
+*/
 firebase.auth().onAuthStateChanged(user => {
-  if (!!user) {
-    //alert(`${user.displayName || user.email}`);
-  }
+  // if (!!user) {
+  //   //alert(`${user.displayName || user.email}`);
+  // }
   currUser = user;
   document.getElementById("name").innerHTML = user.email;
 });
 
+
+/*
+When the user clicks log in, this signs them in if they've made an account
+*/
 $("#loginemail").click(() => {
   firebase.auth().signInWithEmailAndPassword($("#email").val(), $("#password").val()).catch(function (error) {
     var errorCode = error.code;
@@ -51,6 +51,10 @@ $("#loginemail").click(() => {
   });
 });
 
+/*
+When the user registers, they have to enter their password twice, then it creates an account for them
+and signs them in
+*/
 $("#register").click(() => {
   let pwd1 = $("#password").val();
   let pwd2 = $("#password2").val();
@@ -65,23 +69,33 @@ $("#register").click(() => {
   }
 });
 
-$("#reset").click(() => {
-  firebase.auth().sendPasswordResetEmail($("#email").val());
-});
+// $("#reset").click(() => {
+//   firebase.auth().sendPasswordResetEmail($("#email").val());
+// });
 
+/*
+The user who creates the game must start the game, so this changes the boolean "started"
+value to true once the game's been started
+*/
 var changeToTrue = function() {
   firebase.database().ref('/games/'+gameKey+'/started').set(true);
   startGame();
 }
 
-var startGame = function () {
 
+/*
+Changes what elements are visible on the screen once the game is started
+*/
+var startGame = function () {
   loadQuestion();
   document.getElementById("game").hidden = false;
   document.getElementById("menu").hidden = true;
   document.getElementById("readyGames").hidden =true;
 };
 
+/*
+This shuffles the answer for the questions that are retrieved by the API
+*/
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
@@ -89,6 +103,9 @@ function shuffle(array) {
   }
 }
 
+/*
+On creation of a game this fetches the questions and answers from the api
+*/
 document.querySelector("#createGameButton").addEventListener('click', function () {
   totalQuestions = document.getElementById("numQuestions").value;
   fetch("https://opentdb.com/api.php?amount=" + document.getElementById("numQuestions").value + "&category=" + document.getElementById("topic").value + "&type=multiple",
@@ -97,18 +114,19 @@ document.querySelector("#createGameButton").addEventListener('click', function (
     .then(data => createGame(data));
 });
 
+
+/*
+This loads a questions and its four answers 
+*/
 var loadQuestion = function () {
   answers = {};
   let questionJSON = triviaquestions[numQuest];
   document.getElementById("question").innerHTML = questionJSON.question;
   Object.values(questionJSON.incorrect_answers).map(x => answers[x] = "false");
-  //console.log(answers);
   answers[questionJSON.correct_answer] = "true";
-  //console.log(questions);
   shuffle(answers);
   document.getElementById("answers").innerHTML = "";
   let i  = Math.floor(Math.random() * Math.floor(4));
-  console.log("i is "+ i);
   for (let j = 0; j < Object.keys(answers).length; j++) {
     let ans = document.createElement("input");
     let lab = document.createElement("label");
@@ -116,36 +134,30 @@ var loadQuestion = function () {
     ans.setAttribute("id", i);
     ans.setAttribute("value", Object.keys(answers)[i]);
     ans.setAttribute("name", "answer");
-    /// ans.setAttribute("name", )
     lab.setAttribute("for", i);
-    //console.log(Object.keys(questions)[i]);
     lab.innerHTML = Object.keys(answers)[i];
-    ans.addEventListener("click", function () {
-      console.log("clicked");
-      if (Object.values(answers)[i] == "true") {
-        //lab.style.color ="green";
-        //console.log("correct");
-        firebase.database().ref('games/' + gameKey + '/users/' + currUser.uid)
-      } else if (Object.values(answers)[i] == "false") {
-        //lab.style.color = "red";
-        console.log("false");
-      }
-    })
+    // ans.addEventListener("click", function () {
+    //   if (Object.values(answers)[i] == "true") {
+    //     firebase.database().ref('games/' + gameKey + '/users/' + currUser.uid)
+    //   } else if (Object.values(answers)[i] == "false") {
+    //     console.log("false");
+    //   }
+    // })
     document.getElementById("answers").appendChild(ans);
     document.getElementById("answers").appendChild(lab);
-    //$("#answerScreen").hidden = true;
     document.getElementById("answerScreen").hidden = true;
-    //$("#game").hidden = false;
     document.getElementById("game").hidden = false;
     i = (i+1)%4;
   }
 }
 
-
+/*
+On submission of a question, this will check if the answer is true and if it is it will
+increase the users score. This also increments the count of how many questions the user 
+has answered so far.
+*/
 var submitFunc = function () {
   numQuest++;
-  console.log("butt");
-  console.log($('input[name=answer]:checked').val());
   if (answers[$('input[name=answer]:checked').val()] == "true") {
     score++;
     }
@@ -161,8 +173,6 @@ var submitFunc = function () {
     next.innerHTML = "Next Question";
     next.addEventListener("click", loadQuestion);
   }
-  console.log(answers);
-  console.log(answers[$('input[name=answer]:checked').val()]);
 
   msg.innerHTML = "You answered " + $('input[name=answer]:checked').val() + ", which is " + answers[$('input[name=answer]:checked').val()];
   $ansScreen.appendChild(msg);
@@ -171,6 +181,10 @@ var submitFunc = function () {
   document.getElementById("game").hidden = true;
 }
 
+/*
+This sets the results of how the user did at the end in the database.
+Still trying to get it to load the results of all of the users!
+*/
 var loadResults = function () {
   document.getElementById("results").innerHTML = "";
 
@@ -180,7 +194,6 @@ var loadResults = function () {
   })
   .then(firebase.database().ref('games/' + gameKey + '/results').once('value').then(function (ss2) {
     samp = ss2;
-    console.log(Object.keys(ss2.val()).length);
     Object.keys(ss2.val()).forEach(function (key) {
       let line = document.createElement("h1")
       line.innerHTML = key + " got " + score + " out of " + totalQuestions + " questions";
@@ -194,7 +207,9 @@ var loadResults = function () {
   }));
 }
 
-
+/*
+Obviously this is not in use rn lol but leaving it in for future 
+*/
 //update leaderboard
 // functions.database.ref('/games/{gameKey}/results/{nickname}')
 //     .onCreate((snapshot, context) => {
@@ -212,13 +227,13 @@ var loadResults = function () {
 //      console.log("butts");
 //     });
 
-var snap;
+/*
+Prints the results of the game, only for the current user though. Still fixing it.
+*/
 var updateLeaderboard = firebase.database().ref('games/'+ gameKey + '/results');
 updateLeaderboard.on('value', function(snapshot) {
   snap = snapshot;
-   const original = snapshot.val();
-   console.log("Adding ", original);
-   
+   const original = snapshot.val();   
    let score = document.createElement("h1");
    score.innerHTML = nickname + " got " + snapshot + " questions right.";
    document.getElementById("results2").appendChild(score);
@@ -227,10 +242,11 @@ updateLeaderboard.on('value', function(snapshot) {
 
   
 
-var temp;
-
+/*
+When a user enters the access key to join an already created game, this 
+retrieves the already created questions and answers for them
+*/
 var joinGame = function() {
-  console.log("your in the func at least");
   nickname = document.getElementById("jnickname").value;
   let gameId = document.getElementById("gameid").value;
   gameKey = gameId;
@@ -246,6 +262,10 @@ var joinGame = function() {
   startGame();
 }
 
+/*
+resets score and number of questions answered and displays what should 
+be displayed and hides the rest
+*/
 var displayMenu = function () {
   score = 0;
   numQuest = 0;
@@ -255,6 +275,10 @@ var displayMenu = function () {
   document.getElementById("menu").hidden = false;
 }
 
+/*
+Creates a new game, checks to see that the user is signed it. 
+Adds game to the database. Also displays what needs to be displayed
+*/
 var createGame = function(triviaJSON) {
   if (currUser == null) {
     alert("Please sign in to play Trivia Blast!");
@@ -264,15 +288,12 @@ var createGame = function(triviaJSON) {
   triviaquestions = triviaJSON.results;
   let gid = document.createElement("h1");
   mydb.ref("games").child("activegame").once('value', ss => {
-    // alert(ss.val());
     gameKey = firebase.database().ref().child('games').push().key;
-    console.log(gameKey);
     gid.innerHTML = "Your Game ID is " + gameKey;
     let gameData = {started: false, questions: triviaquestions, users: {[currUser.uid]: score}}
     nickname = document.getElementById("nickname").value;
     var updates = {};
     updates['/games/' + gameKey] = gameData;
-    // updates['/games/'+ gameKey + "/users"] = currUser.email;
     return firebase.database().ref().update(updates);
 
   });
