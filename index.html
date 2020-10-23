@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<head>
+    <link rel="shortcut icon" href="#">
+    <title>Trivia Blast</title>
+    <script src="https://www.gstatic.com/firebasejs/7.21.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.21.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.21.0/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.21.0/firebase-auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <div id="login">
+        <input type="text" id="email" value="Email"></input>
+        <input type="text" value="Password" id="password"></input>
+        <button id="loginemail">Login</button>
+        <input type="text" value="2" id= "password2"></input>
+        <input type="button" id="register" value="Register"></input>
+        <span id="welcome"> Welcome <span id="name">No Name</span></span>
+    </div>
+
+    <div id="Title">
+        <h1>Trivia Blast</h1>
+        <button id="startGameButton">Start</button>
+    </div>
+
+    <div id="menu" hidden></div>
+
+    <div id="game">
+        <div id="question"></div>
+        <div id="answers"></div>
+        <button id="submit" onclick="submitFunc()" hidden>Submit Answer</button>
+    </div>
+
+    <div id="answerScreen" hidden>
+    </div>
+
+    <script src="index.js"></script>
+</body>

@@ -1,0 +1,9 @@
+div {
+    margin: auto;
+    text-align: center;
+    display: block;
+}
+
+[hidden] {
+    display: none;
+}
